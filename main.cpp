@@ -31,20 +31,18 @@ vector<Object> models;
 float camPos[] = { 10, 10, 10 }; //where the camera is
 float camTarget[] = { 0, 0, 0 };
 float origin[] = { 0,0,0 };
-//light source position
-float lp[3] = { 0, 0, 0 };
-/* LIGHTING */
 
-float light_pos[4] = { lp[0],lp[1],lp[2],1 };
+/* LIGHTING */
+float light_pos[4] = { 0,5,0,1 };
 float amb[4] = { 0,1,1,1 };
 float diff[4] = { 1,0,1,1 };
 float spec[4] = { 1,0,1,1 };
 
 /* Materials */
 
-float ambMat[4] = { 0.5,0.5,0.5,1 };
-float diffMat[4] = { 1,0,0,1 };
-float specMat[4] = { 0,1,0,1 };
+float ambMat[6][4] = {{0.5, 0.5, 0.5, 1}, {0.1, 0.18725, 0.1745, 1}, {0.24725, 0.1995, 0.0745, 1}, {0.2, 0.2, 0.6, 1}, {0.25, 0.20725, 0.20725, 1}};
+float diffMat[6][4] = {{0.5, 0, 0, 1}, {0.396, 0.74151, 0.69102, 1}, {0.75164, 0.60648, 0.22648, 1}, {1, 0, 1, 1}, {1, 0.829, 0.829, 1}};
+float specMat[6][4] = {{0, 0.5, 0, 1}, {0.297254, 0.30829, 0.306678, 1}, {0.628281, 0.555802, 0.366065, 1}, {1, 1, 1, 1}, {0.296648, 0.296648, 0.296648, 1}};
 
 double* m_start = new double[3];
 double* m_end = new double[3];
@@ -91,16 +89,19 @@ void resize(float factor){
     models[picked_object].resetCorner();
 }
 
-void moveLight(int axis, int direction) {
-    lp[axis] += direction;
-}
-
 void changeObject(int axis, int direction){
     if (glutGetModifiers() == GLUT_ACTIVE_ALT) {
         rotate(axis, direction);
     } else {
         move(axis, direction);
     }
+}
+
+void changeMat(int key){
+    cout << "new mat " << picked_object << endl;
+    if (picked_object == -1) return;
+    models[picked_object].material = key - 49;
+    cout << "new mat = " << models[picked_object].material << endl;
 }
 
 //OpenGL functions
@@ -119,7 +120,13 @@ void keyboard(unsigned char key, int xIn, int yIn)
     case 'r':
         clear();
         break;
-        
+    case 49:
+    case 50:
+    case 51:
+    case 52:
+    case 53:
+        changeMat(key);
+        break; 
     case 'j':
         changeObject(0, -1);
         break;
@@ -306,6 +313,11 @@ void init(void)
 
 void draw(Object& object)
 {
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambMat[object.material]);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffMat[object.material]);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specMat[object.material]);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 27);
+
     glPushMatrix();
     glRotatef(object.orientation[0], 1, 0, 0);
     glRotatef(object.orientation[1], 0, 1, 0);
@@ -361,11 +373,6 @@ void display()
     glLightfv(GL_LIGHT0, GL_AMBIENT, amb);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, diff);
     glLightfv(GL_LIGHT0, GL_SPECULAR, spec);
-
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambMat);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffMat);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specMat);
-    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 27);
 
     for (int i = 0; i < models.size(); i++) {
         draw(models[i]);

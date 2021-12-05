@@ -6,7 +6,7 @@ Object::Object(float pX, float pY, float pZ)
 	: position {pX,pY,pZ}
 	, orientation {0,0,0}
 	, scale {0,0,0}
-	, material(1)
+	, material(0)
 	, type(rand()%5)
 	, size(1)
 	, DownLeft {0,0,0}
