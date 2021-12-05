@@ -78,98 +78,71 @@ void move(int axis, int direction) {
     models[picked_object].resetCorner();
 }
 
+void rotate(int axis, int direction) {
+    if (picked_object == -1) return;
+    models[picked_object].orientation[axis] += direction * 15;
+    models[picked_object].orientation[axis] %= 360;
+    models[picked_object].resetCorner();
+}
+
+void resize(float factor){
+    if (picked_object == -1) return;
+    models[picked_object].size *= factor;
+    models[picked_object].resetCorner();
+}
+
 void moveLight(int axis, int direction) {
     lp[axis] += direction;
+}
+
+void changeObject(int axis, int direction){
+    if (glutGetModifiers() == GLUT_ACTIVE_ALT) {
+        rotate(axis, direction);
+    } else {
+        move(axis, direction);
+    }
 }
 
 //OpenGL functions
 //keyboard stuff
 void keyboard(unsigned char key, int xIn, int yIn)
-{
-    int mod = glutGetModifiers();
-    if (key == 'q')
-    {
-        exit(0);
-    }
-    else if (key == 'a')
-    {
-        addModel();
-    }
-    else if (key == 'r')
-    {
-        clear();
-    }
-    else if (key == 't')
-    {
-        cout << "Models has" << models.size() << "Objects" << endl;
-        if (picked_object != -1)
-            cout << "Selected objects is of index " << picked_object << " of object " << models[picked_object].type << endl;
-    }
-    else if (key == 'j') {
-        if (mod == GLUT_ACTIVE_ALT)
-            moveLight(0, -1);
-        else
-            move(0, -1);
-    }
-
-    else if (key == 'k') {
-        if (mod == GLUT_ACTIVE_ALT)
-            moveLight(1, -1);
-        else
-            move(1, -1);
-    }
-
-    else if (key == 'l') {
-        if (mod == GLUT_ACTIVE_ALT)
-            moveLight(0, 1);
-        else
-            move(0, 1);
-    }
-
-    else if (key == 'i') {
-        if (mod == GLUT_ACTIVE_ALT)
-            moveLight(1, 1);
-        else
-            move(1, 1);
-    }
-
-    else if (key == 'u') {
-        if (mod == GLUT_ACTIVE_ALT)
-            moveLight(2, -1);
-        else
-            move(2, -1);
-    }
-
-    else if (key == 'o') {
-        if (mod == GLUT_ACTIVE_ALT)
-            moveLight(2, 1);
-        else
-            move(2, 1);
-    }
-}
-
-void special(int key, int xIn, int yIn)
-{
+{   
     switch (key)
     {
-    case GLUT_KEY_DOWN:
-        camPos[1] -= 0.2f;
-        camTarget[1] -= 0.2f;
+    case 'q':
+    case 27:
+        exit(0);
         break;
-    case GLUT_KEY_UP:
-        camPos[1] += 0.2f;
-        camTarget[1] += 0.2f;
+    case 'a':
+        addModel();
         break;
-    case GLUT_KEY_LEFT:
-        camPos[0] -= 0.2f;
-        camTarget[0] -= 0.2f;
+    case 'r':
+        clear();
         break;
-    case GLUT_KEY_RIGHT:
-        camPos[0] += 0.2f;
-        camTarget[0] += 0.2f;
+        
+    case 'j':
+        changeObject(0, -1);
+        break;
+    case 'k':
+        changeObject(1, -1);
+        break;
+    case 'l':
+        changeObject(0, 1);
+        break;
+    case 'i':
+        changeObject(1, 1);
+        break;
+    case 'u':
+        changeObject(2, -1);
+        break;
+    case 'o':
+        changeObject(2, 1);
+        break;
+    default:
         break;
     }
 }
+
 
 void sphereRayPick(Object& object)
 {
@@ -334,27 +307,28 @@ void init(void)
 void draw(Object& object)
 {
     glPushMatrix();
-    glTranslatef(object.position[0], object.position[1], object.position[2]);
     glRotatef(object.orientation[0], 1, 0, 0);
     glRotatef(object.orientation[1], 0, 1, 0);
     glRotatef(object.orientation[2], 0, 0, 1);
+    glTranslatef(object.position[0], object.position[1], object.position[2]);
+    glScalef(object.size, object.size, object.size);
     glFrontFace(GL_CW);
     switch (object.type)
     {
     case Cube:
-        glutSolidCube(object.size);
+        glutSolidCube(1);
         break;
     case Sphere:
-        glutSolidSphere(object.size, 16, 16);
+        glutSolidSphere(1, 16, 16);
         break;
     case Cone:
-        glutSolidCone(object.size, object.size, 16, 16);
+        glutSolidCone(1, 1, 16, 16);
         break;
     case Cylinder:
-        glutSolidCylinder(object.size, object.size, 16, 16);
+        glutSolidCylinder(1, 1, 16, 16);
         break;
     case Teapot:
-        glutSolidTeapot(object.size);
+        glutSolidTeapot(1);
         break;
     default:
         break;
@@ -397,6 +371,12 @@ void display()
         draw(models[i]);
     }
 
+    glPushMatrix();
+    glTranslatef(0,-2,0);
+    glScalef(10,0.2,10);
+    glutSolidCube(1);
+    glPopMatrix();
+
     glutSwapBuffers();
 }
 
@@ -415,6 +395,37 @@ void FPSTimer(int value)
 { //60fps
     glutPostRedisplay();
     glutTimerFunc(17, FPSTimer, 0);
+}
+
+void special(int key, int xIn, int yIn)
+{
+    switch (key)
+    {
+    case GLUT_KEY_DOWN:
+    if (glutGetModifiers() == GLUT_ACTIVE_ALT){
+        resize(0.9);
+    } else {
+        camPos[1] -= 0.2f;
+        camTarget[1] -= 0.2f;
+    }
+        break;
+    case GLUT_KEY_UP:
+    if (glutGetModifiers() == GLUT_ACTIVE_ALT){
+        resize(1.1);
+    } else {
+        camPos[1] += 0.2f;
+        camTarget[1] += 0.2f;
+    }
+        break;
+    case GLUT_KEY_LEFT:
+        camPos[0] -= 0.2f;
+        camTarget[0] -= 0.2f;
+        break;
+    case GLUT_KEY_RIGHT:
+        camPos[0] += 0.2f;
+        camTarget[0] += 0.2f;
+        break;
+    }
 }
 
 /* main function - program entry point */

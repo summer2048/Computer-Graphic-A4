@@ -12,7 +12,7 @@ class Object
 {
 public:
 	float position[3];
-	float orientation[3];
+	int orientation[3];
 	float scale[3];
 	int material;
 	int type;
