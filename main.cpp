@@ -37,7 +37,6 @@ double *m_end = new double[3];
 
 double *Rd = new double[3];
 
-
 // The index of picked object, -1 if none is picked.
 int picked_object = -1;
 
@@ -45,6 +44,7 @@ void addModel()
 {
     Object newModel(origin[0], origin[1], origin[2]);
     models.push_back(newModel);
+    picked_object = models.size()-1;
 }
 
 void deleteModel(int i)
@@ -54,11 +54,14 @@ void deleteModel(int i)
 }
 
 void clear(){
-    int i = models.size();
-    while (i > 0){
+    while (models.size() > 0){
         deleteModel(0);
-        i = models.size();
     }
+}
+
+void move(int axis, int direction){
+    if (picked_object == -1) return;
+    models[picked_object].position[axis] += direction * 5;
 }
 
 //OpenGL functions
@@ -84,22 +87,25 @@ void keyboard(unsigned char key, int xIn, int yIn)
         if (picked_object != -1)
             cout << "Selected objects is of index " << picked_object << " of object " << models[picked_object].type << endl;
         break;
-    case '1':
-        break;
+
 
     case 'j':
-        camPos[0] -= 0.1f;
+        move(0,-1);
         break;
-
     case 'k':
-        camPos[1] += 0.1f;
+        move(1,-1);
         break;
-
     case 'l':
-        camPos[0] += 0.1f;
+        move(0,1);
         break;
     case 'i':
-        camPos[1] -= 0.1f;
+        move(1,1);
+        break;
+    case 'u':
+        move(2,-1);
+        break;
+    case 'o':
+        move(2,1);
         break;
     }
 }
@@ -127,7 +133,7 @@ void special(int key, int xIn, int yIn)
     }
 }
 
-void sphereRayPick(Object object)
+void sphereRayPick(Object &object)
 {
     double A = 1; // Rd is unit vector, so Rd * Rd = 1.
     double *R0Pc = new double[3];
@@ -141,7 +147,6 @@ void sphereRayPick(Object object)
     double discriminant = B * B - 4 * A * C;
     if (discriminant < 0)
         return;
-    cout << "Cong! Selected!" << endl;
     double t0 = (-B + sqrt(discriminant)) / (2 * A);
     double t1 = (-B - sqrt(discriminant)) / (2 * A);
     if (t0 < t1)
@@ -152,41 +157,36 @@ void sphereRayPick(Object object)
 
 // plane = the plane which is constant e.g. x = 1, then plane = x.
 // 0,1,2 represent x,y,z
-void intersectDownLeft(Object object, int plane){
+void intersectDownLeft(Object &object, int plane){
     float planeConst,d;
     planeConst = object.DownLeft[plane];
     if (Rd[plane] == 0) return;
-    d = (plane - m_start[plane])/Rd[plane];
+    d = (planeConst - m_start[plane])/Rd[plane];
     if (d < 0) return;
     if (m_start[(plane+4)%3]+d*Rd[(plane+4)%3] < object.DownLeft[(plane+4)%3] || m_start[(plane+4)%3]+d*Rd[(plane+4)%3] > object.UpperRight[(plane+4)%3]) return;
     if (m_start[(plane+5)%3]+d*Rd[(plane+5)%3] < object.DownLeft[(plane+5)%3] || m_start[(plane+5)%3]+d*Rd[(plane+5)%3] > object.UpperRight[(plane+5)%3]) return;
-    if (object.distToMouseRay < 0) {
+    if (object.distToMouseRay < 0 || d < object.distToMouseRay) {
         object.distToMouseRay = d;
         return;
     }
-    if (d < object.distToMouseRay) object.distToMouseRay = d;
-    cout << "Cong! Selected!" << endl;
 }
 
-void intersectUpperRight(Object object, int plane){
+void intersectUpperRight(Object &object, int plane){
     float planeConst,d;
     planeConst = object.UpperRight[plane];
     if (Rd[plane] == 0) return;
-    d = (plane - m_start[plane])/Rd[plane];
+    d = (planeConst - m_start[plane])/Rd[plane];
     if (d < 0) return;
     if (m_start[(plane+4)%3]+d*Rd[(plane+4)%3] < object.DownLeft[(plane+4)%3] || m_start[(plane+4)%3]+d*Rd[(plane+4)%3] > object.UpperRight[(plane+4)%3]) return;
     if (m_start[(plane+5)%3]+d*Rd[(plane+5)%3] < object.DownLeft[(plane+5)%3] || m_start[(plane+5)%3]+d*Rd[(plane+5)%3] > object.UpperRight[(plane+5)%3]) return;
-    if (object.distToMouseRay < 0) {
-        cout << "Cong! Selected!" << endl;
+    if (object.distToMouseRay < 0 || d < object.distToMouseRay) {
         object.distToMouseRay = d;
         return;
     }
-    if (d < object.distToMouseRay) object.distToMouseRay = d;
-    cout << "Cong! Selected!" << endl;
 }
 
 
-void boxRayPick(Object object)
+void boxRayPick(Object &object)
 {
     intersectDownLeft(object, 0);
     intersectDownLeft(object, 1);
@@ -220,19 +220,16 @@ void rayPick()
         }
     }
 
-    if (idx == -1)
-        return;
     picked_object = idx;
 }
 
 void mouse(int btn, int state, int x, int y)
 {
     // Clear previous select data
-    picked_object = -1;
-    for (int i = 0; i < models.size(); i++)
-    {
-        models[i].distToMouseRay = -1;
+    if (picked_object != -1){
+        models[picked_object].distToMouseRay = -1;
     }
+
     // New Raypick
     if (state == GLUT_DOWN)
     {
@@ -252,9 +249,6 @@ void mouse(int btn, int state, int x, int y)
         gluUnProject(winX, winY, 1.0, matModelView, matProjection,
                      viewport, &m_end[0], &m_end[1], &m_end[2]);
 
-        // cout << "Mouse start at " << m_start[0] << ", " << m_start[1] << ", " << m_start[2] << endl;
-        // cout << "Mouse end at " << m_end[0] << ", " << m_end[1] << ", " << m_end[2] << endl;
-
         // Set Rd vector
         double xDiff = m_end[0] - m_start[0];
         double yDiff = m_end[1] - m_start[1];
@@ -266,9 +260,12 @@ void mouse(int btn, int state, int x, int y)
         Rd[1] = yDiff / mag;
         Rd[2] = zDiff / mag;
 
-        // cout << "Direction " << Rd[0] << ", " << Rd[1] << ", " << Rd[2] << endl;
 
         rayPick();
+
+        if (btn == GLUT_RIGHT_BUTTON && picked_object != -1){
+            deleteModel(picked_object);
+        }
     }
 }
 
@@ -293,10 +290,10 @@ void init(void)
     m_end[2] = 0;
 }
 
-void draw(Object object)
+void draw(Object &object)
 {
     glPushMatrix();
-    glTranslatef(origin[0], origin[1], origin[2]);
+    glTranslatef(object.position[0], object.position[1], object.position[2]);
     glRotatef(object.orientation[0],1,0,0);
     glRotatef(object.orientation[1],0,1,0);
     glRotatef(object.orientation[2],0,0,1);
@@ -328,7 +325,7 @@ void draw(Object object)
 /* display function - GLUT display callback function
  *		clears the screen, sets the camera position
  */
-void display(void)
+void display()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -364,8 +361,8 @@ void reshape(int w, int h)
 
 void FPSTimer(int value)
 { //60fps
-    glutTimerFunc(17, FPSTimer, 0);
     glutPostRedisplay();
+    glutTimerFunc(17, FPSTimer, 0);
 }
 
 /* main function - program entry point */

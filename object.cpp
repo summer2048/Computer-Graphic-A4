@@ -13,7 +13,6 @@ Object::Object(float pX, float pY, float pZ)
 	, UpperRight {0,0,0}
 	, distToMouseRay(-1)
 {
-	std::cout << "New " << type << std::endl;
 	initCorner();
 }
 
