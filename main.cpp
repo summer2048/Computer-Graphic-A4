@@ -28,14 +28,27 @@ using namespace std;
 vector<Object> models;
 
 //Globals
-float camPos[] = {10, 10, 10}; //where the camera is
-float camTarget[] = {0, 0, 0};
-float origin[] = {0,0,0};
+float camPos[] = { 10, 10, 10 }; //where the camera is
+float camTarget[] = { 0, 0, 0 };
+float origin[] = { 0,0,0 };
+//light source position
+float lp[3] = { 0, 0, 0 };
+/* LIGHTING */
 
-double *m_start = new double[3];
-double *m_end = new double[3];
+float light_pos[4] = { lp[0],lp[1],lp[2],1 };
+float amb[4] = { 0,1,1,1 };
+float diff[4] = { 1,0,1,1 };
+float spec[4] = { 1,0,1,1 };
 
-double *Rd = new double[3];
+/* Materials */
+
+float ambMat[4] = { 0.5,0.5,0.5,1 };
+float diffMat[4] = { 1,0,0,1 };
+float specMat[4] = { 0,1,0,1 };
+
+double* m_start = new double[3];
+double* m_end = new double[3];
+double* Rd = new double[3];
 
 // The index of picked object, -1 if none is picked.
 int picked_object = -1;
@@ -44,25 +57,29 @@ void addModel()
 {
     Object newModel(origin[0], origin[1], origin[2]);
     models.push_back(newModel);
-    picked_object = models.size()-1;
+    picked_object = models.size() - 1;
 }
 
 void deleteModel(int i)
 {
-    models[i] = models[models.size()-1];
+    models[i] = models[models.size() - 1];
     models.pop_back();
 }
 
-void clear(){
-    while (models.size() > 0){
+void clear() {
+    while (models.size() > 0) {
         deleteModel(0);
     }
 }
 
-void move(int axis, int direction){
+void move(int axis, int direction) {
     if (picked_object == -1) return;
     models[picked_object].position[axis] += direction;
     models[picked_object].resetCorner();
+}
+
+void moveLight(int axis, int direction) {
+    lp[axis] += direction;
 }
 
 //OpenGL functions
@@ -70,44 +87,64 @@ void move(int axis, int direction){
 void keyboard(unsigned char key, int xIn, int yIn)
 {
     int mod = glutGetModifiers();
-    switch (key)
+    if (key == 'q')
     {
-    case 'q':
-    case 27: //27 is the esc key
         exit(0);
-        break;
-    case 'a': //Add to origin
+    }
+    else if (key == 'a')
+    {
         addModel();
-        break;
-    case 'r':
+    }
+    else if (key == 'r')
+    {
         clear();
-        break;
-
-    case 't':
+    }
+    else if (key == 't')
+    {
         cout << "Models has" << models.size() << "Objects" << endl;
         if (picked_object != -1)
             cout << "Selected objects is of index " << picked_object << " of object " << models[picked_object].type << endl;
-        break;
+    }
+    else if (key == 'j') {
+        if (mod == GLUT_ACTIVE_ALT)
+            moveLight(0, -1);
+        else
+            move(0, -1);
+    }
 
+    else if (key == 'k') {
+        if (mod == GLUT_ACTIVE_ALT)
+            moveLight(1, -1);
+        else
+            move(1, -1);
+    }
 
-    case 'j':
-        move(0,-1);
-        break;
-    case 'k':
-        move(1,-1);
-        break;
-    case 'l':
-        move(0,1);
-        break;
-    case 'i':
-        move(1,1);
-        break;
-    case 'u':
-        move(2,-1);
-        break;
-    case 'o':
-        move(2,1);
-        break;
+    else if (key == 'l') {
+        if (mod == GLUT_ACTIVE_ALT)
+            moveLight(0, 1);
+        else
+            move(0, 1);
+    }
+
+    else if (key == 'i') {
+        if (mod == GLUT_ACTIVE_ALT)
+            moveLight(1, 1);
+        else
+            move(1, 1);
+    }
+
+    else if (key == 'u') {
+        if (mod == GLUT_ACTIVE_ALT)
+            moveLight(2, -1);
+        else
+            move(2, -1);
+    }
+
+    else if (key == 'o') {
+        if (mod == GLUT_ACTIVE_ALT)
+            moveLight(2, 1);
+        else
+            move(2, 1);
     }
 }
 
@@ -134,10 +171,10 @@ void special(int key, int xIn, int yIn)
     }
 }
 
-void sphereRayPick(Object &object)
+void sphereRayPick(Object& object)
 {
     double A = 1; // Rd is unit vector, so Rd * Rd = 1.
-    double *R0Pc = new double[3];
+    double* R0Pc = new double[3];
     R0Pc[0] = m_start[0] - object.position[0];
     R0Pc[1] = m_start[1] - object.position[1];
     R0Pc[2] = m_start[2] - object.position[2];
@@ -158,28 +195,28 @@ void sphereRayPick(Object &object)
 
 // plane = the plane which is constant e.g. x = 1, then plane = x.
 // 0,1,2 represent x,y,z
-void intersectDownLeft(Object &object, int plane){
-    float planeConst,d;
+void intersectDownLeft(Object& object, int plane) {
+    float planeConst, d;
     planeConst = object.DownLeft[plane];
     if (Rd[plane] == 0) return;
-    d = (planeConst - m_start[plane])/Rd[plane];
+    d = (planeConst - m_start[plane]) / Rd[plane];
     if (d < 0) return;
-    if (m_start[(plane+4)%3]+d*Rd[(plane+4)%3] < object.DownLeft[(plane+4)%3] || m_start[(plane+4)%3]+d*Rd[(plane+4)%3] > object.UpperRight[(plane+4)%3]) return;
-    if (m_start[(plane+5)%3]+d*Rd[(plane+5)%3] < object.DownLeft[(plane+5)%3] || m_start[(plane+5)%3]+d*Rd[(plane+5)%3] > object.UpperRight[(plane+5)%3]) return;
+    if (m_start[(plane + 4) % 3] + d * Rd[(plane + 4) % 3] < object.DownLeft[(plane + 4) % 3] || m_start[(plane + 4) % 3] + d * Rd[(plane + 4) % 3] > object.UpperRight[(plane + 4) % 3]) return;
+    if (m_start[(plane + 5) % 3] + d * Rd[(plane + 5) % 3] < object.DownLeft[(plane + 5) % 3] || m_start[(plane + 5) % 3] + d * Rd[(plane + 5) % 3] > object.UpperRight[(plane + 5) % 3]) return;
     if (object.distToMouseRay < 0 || d < object.distToMouseRay) {
         object.distToMouseRay = d;
         return;
     }
 }
 
-void intersectUpperRight(Object &object, int plane){
-    float planeConst,d;
+void intersectUpperRight(Object& object, int plane) {
+    float planeConst, d;
     planeConst = object.UpperRight[plane];
     if (Rd[plane] == 0) return;
-    d = (planeConst - m_start[plane])/Rd[plane];
+    d = (planeConst - m_start[plane]) / Rd[plane];
     if (d < 0) return;
-    if (m_start[(plane+4)%3]+d*Rd[(plane+4)%3] < object.DownLeft[(plane+4)%3] || m_start[(plane+4)%3]+d*Rd[(plane+4)%3] > object.UpperRight[(plane+4)%3]) return;
-    if (m_start[(plane+5)%3]+d*Rd[(plane+5)%3] < object.DownLeft[(plane+5)%3] || m_start[(plane+5)%3]+d*Rd[(plane+5)%3] > object.UpperRight[(plane+5)%3]) return;
+    if (m_start[(plane + 4) % 3] + d * Rd[(plane + 4) % 3] < object.DownLeft[(plane + 4) % 3] || m_start[(plane + 4) % 3] + d * Rd[(plane + 4) % 3] > object.UpperRight[(plane + 4) % 3]) return;
+    if (m_start[(plane + 5) % 3] + d * Rd[(plane + 5) % 3] < object.DownLeft[(plane + 5) % 3] || m_start[(plane + 5) % 3] + d * Rd[(plane + 5) % 3] > object.UpperRight[(plane + 5) % 3]) return;
     if (object.distToMouseRay < 0 || d < object.distToMouseRay) {
         object.distToMouseRay = d;
         return;
@@ -187,7 +224,7 @@ void intersectUpperRight(Object &object, int plane){
 }
 
 
-void boxRayPick(Object &object)
+void boxRayPick(Object& object)
 {
     intersectDownLeft(object, 0);
     intersectDownLeft(object, 1);
@@ -204,7 +241,8 @@ void rayPick()
     {
         if (models[i].type == Sphere) {
             sphereRayPick(models[i]);
-        } else {
+        }
+        else {
             boxRayPick(models[i]);
         }
     }
@@ -227,7 +265,7 @@ void rayPick()
 void mouse(int btn, int state, int x, int y)
 {
     // Clear previous select data
-    if (picked_object != -1){
+    if (picked_object != -1) {
         models[picked_object].distToMouseRay = -1;
     }
 
@@ -245,10 +283,10 @@ void mouse(int btn, int state, int x, int y)
         double winY = viewport[3] - (double)y;
 
         gluUnProject(winX, winY, 0.0, matModelView, matProjection,
-                     viewport, &m_start[0], &m_start[1], &m_start[2]);
+            viewport, &m_start[0], &m_start[1], &m_start[2]);
 
         gluUnProject(winX, winY, 1.0, matModelView, matProjection,
-                     viewport, &m_end[0], &m_end[1], &m_end[2]);
+            viewport, &m_end[0], &m_end[1], &m_end[2]);
 
         // Set Rd vector
         double xDiff = m_end[0] - m_start[0];
@@ -264,7 +302,7 @@ void mouse(int btn, int state, int x, int y)
 
         rayPick();
 
-        if (btn == GLUT_RIGHT_BUTTON && picked_object != -1){
+        if (btn == GLUT_RIGHT_BUTTON && picked_object != -1) {
             deleteModel(picked_object);
         }
     }
@@ -273,7 +311,9 @@ void mouse(int btn, int state, int x, int y)
 //initialization
 void init(void)
 {
-    glClearColor(0, 0, 0, 0);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glClearColor(1, 1, 1, 0);
     glColor3f(1, 1, 1);
     glEnable(GL_DOUBLEBUFFER);
 
@@ -342,11 +382,21 @@ void display()
     glVertex3f(m_end[0], m_end[1], m_end[2]);
     glEnd();
 
-    glColor3f(0,1,1);
-    for (int i = 0; i < models.size(); i++){
+    glColor3f(0, 1, 1);
+    glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, amb);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, diff);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, spec);
+
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambMat);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffMat);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specMat);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 27);
+
+    for (int i = 0; i < models.size(); i++) {
         draw(models[i]);
     }
-    
+
     glutSwapBuffers();
 }
 
@@ -368,7 +418,7 @@ void FPSTimer(int value)
 }
 
 /* main function - program entry point */
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     glutInit(&argc, argv); //starts up GLUT
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
@@ -393,6 +443,11 @@ int main(int argc, char **argv)
 
     //fps timer callback
     glutTimerFunc(17, FPSTimer, 0);
+
+    glEnable(GL_DEPTH_TEST);
+    glFrontFace(GL_CW);
+    glCullFace(GL_FRONT);
+    glEnable(GL_CULL_FACE);
 
     init();
 
