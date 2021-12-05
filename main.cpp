@@ -100,10 +100,8 @@ void changeObject(int axis, int direction){
 }
 
 void changeMat(int key){
-    cout << "new mat " << picked_object << endl;
     if (picked_object == -1) return;
     models[picked_object].material = key - 49;
-    cout << "new mat = " << models[picked_object].material << endl;
 }
 
 //OpenGL functions
