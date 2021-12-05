@@ -39,7 +39,9 @@ float light_pos[4] = { lp[0],lp[1],lp[2],1 };
 float amb[4] = { 0,1,1,1 };
 float diff[4] = { 1,0,1,1 };
 float spec[4] = { 1,0,1,1 };
-
+float amb1[4] = { 1,1,1,1 };
+float diff1[4] = { 1,1,1,1 };
+float spec1[4] = { 1,1,1,1 };
 /* Materials */
 
 float ambMat[4] = { 0.5,0.5,0.5,1 };
