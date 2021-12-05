@@ -5,8 +5,8 @@
 #define Cube 0
 #define Sphere 1
 #define Cone 2
-#define Tetrahedron 3
-#define Octahedron 4
+#define Cylinder 3
+#define Teapot 4
 
 class Object
 {
