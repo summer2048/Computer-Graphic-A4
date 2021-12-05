@@ -20,8 +20,8 @@
 #define Cube 0
 #define Sphere 1
 #define Cone 2
-#define Tetrahedron 3
-#define Octahedron 4
+#define Cylinder 3
+#define Teapot 4
 
 using namespace std;
 
@@ -290,36 +290,37 @@ void init(void)
     m_end[2] = 0;
 }
 
-void draw(Object &object)
+void draw(Object& object)
 {
     glPushMatrix();
     glTranslatef(object.position[0], object.position[1], object.position[2]);
-    glRotatef(object.orientation[0],1,0,0);
-    glRotatef(object.orientation[1],0,1,0);
-    glRotatef(object.orientation[2],0,0,1);
+    glRotatef(object.orientation[0], 1, 0, 0);
+    glRotatef(object.orientation[1], 0, 1, 0);
+    glRotatef(object.orientation[2], 0, 0, 1);
     glFrontFace(GL_CW);
-	switch (object.type)
-	{
-	case Cube:
-	    glutSolidCube(1);
+    switch (object.type)
+    {
+    case Cube:
+        glutSolidCube(object.size);
         break;
-	case Sphere:
-		glutSolidSphere(1,16,16);
+    case Sphere:
+        glutSolidSphere(object.size, 16, 16);
         break;
-	case Cone:
-		glutSolidCone(1,2,16,16);
+    case Cone:
+        glutSolidCone(object.size, object.size, 16, 16);
         break;
-	case Tetrahedron:
-		glutSolidTetrahedron();
+    case Cylinder:
+        glutSolidCylinder(object.size, object.size, 16, 16);
         break;
-	case Octahedron:
-		glutSolidOctahedron();
+    case Teapot:
+        glutSolidTeapot(object.size);
         break;
-	default:
-		break;
-	}
+    default:
+        break;
+    }
     glPopMatrix();
 }
+
 
 
 /* display function - GLUT display callback function
