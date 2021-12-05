@@ -61,7 +61,7 @@ void clear(){
 
 void move(int axis, int direction){
     if (picked_object == -1) return;
-    models[picked_object].position[axis] += direction * 5;
+    models[picked_object].position[axis] += direction;
 }
 
 //OpenGL functions
