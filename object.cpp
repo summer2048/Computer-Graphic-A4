@@ -16,27 +16,39 @@ Object::Object(float pX, float pY, float pZ)
 	initCorner();
 }
 
-void Object::initCorner(){
-	switch (type){
-		case Cube:
-			DownLeft[0] = position[0] - size/2;
-			DownLeft[1] = position[1] - size/2;
-			DownLeft[2] = position[2] - size/2;
-			UpperRight[0] = position[0] + size/2;
-			UpperRight[1] = position[1] + size/2;
-			UpperRight[2] = position[2] + size/2;
+void Object::initCorner() {
+	switch (type) {
+	case Cube:
+		DownLeft[0] = position[0] - size / 2;
+		DownLeft[1] = position[1] - size / 2;
+		DownLeft[2] = position[2] - size / 2;
+		UpperRight[0] = position[0] + size / 2;
+		UpperRight[1] = position[1] + size / 2;
+		UpperRight[2] = position[2] + size / 2;
 		break;
-		/**
-		 * More case to be add here for different objects
-		 * */
-		default:
-			DownLeft[0] = position[0] - size/2;
-			DownLeft[1] = position[1] - size/2;
-			DownLeft[2] = position[2] - size/2;
-			UpperRight[0] = position[0] + size/2;
-			UpperRight[1] = position[1] + size/2;
-			UpperRight[2] = position[2] + size/2;
-			break;
+	case Cone:
+		DownLeft[0] = position[0] - size;
+		DownLeft[1] = position[1] - size;
+		DownLeft[2] = position[2];
+		UpperRight[0] = position[0] + size;
+		UpperRight[1] = position[1] + size;
+		UpperRight[2] = position[2] + size;
+	case Cylinder:
+		DownLeft[0] = position[0] - size;
+		DownLeft[1] = position[1] - size;
+		DownLeft[2] = position[2];
+		UpperRight[0] = position[0] + size;
+		UpperRight[1] = position[1] + size;
+		UpperRight[2] = position[2] + size;
+	case Teapot:
+		DownLeft[0] = position[0] - size;
+		DownLeft[1] = position[1] - size;
+		DownLeft[2] = position[2];
+		UpperRight[0] = position[0] + size;
+		UpperRight[1] = position[1] + size;
+		UpperRight[2] = position[2] + size;
+	default:
+		break;
 	}
 }
 
