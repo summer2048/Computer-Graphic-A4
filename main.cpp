@@ -62,6 +62,7 @@ void clear(){
 void move(int axis, int direction){
     if (picked_object == -1) return;
     models[picked_object].position[axis] += direction;
+    models[picked_object].resetCorner();
 }
 
 //OpenGL functions
