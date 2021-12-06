@@ -84,6 +84,12 @@ void clear() {
     camPos[0] = 10;
     camPos[1] = 10;
     camPos[2] = 10;
+    models[0].position[0] = 5;
+    models[0].position[1] = 5;
+    models[0].position[2] = 0;
+    models[1].position[0] = -5;
+    models[1].position[1] = 5;
+    models[1].position[2] = 0;
 }
 
 void move(int axis, int direction) {
