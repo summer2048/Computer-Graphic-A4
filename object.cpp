@@ -5,7 +5,7 @@
 Object::Object(float pX, float pY, float pZ)
 	: position {pX,pY,pZ}
 	, orientation {0,0,0}
-	, scale {0,0,0}
+	, scale {1,1,1}
 	, material(1)
 	, type(rand()%5)
 	, size(1)
