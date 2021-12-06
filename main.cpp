@@ -40,6 +40,8 @@ int scene_rot[3] = { 0, 0, 0 };
 int light0_idx = 0;
 int light1_idx = 1;
 
+int mouse_pos[2] = {0,0};
+
 /* LIGHTING */
 // float light_pos[2][4] = {{ 0,5,0,1 }, { -5,5,0,1 }};
 float amb[2][4] = {{ 0,1,1,1 }, { 0.7,0.7,0.7,1 }};
@@ -101,6 +103,7 @@ void move(int axis, int direction) {
 
 void rotate(int axis, int direction) {
     if (picked_object == -1) return;
+    if (models[picked_object].type == Sphere) return;
     models[picked_object].orientation[axis] += direction * 15;
     models[picked_object].orientation[axis] %= 360;
     models[picked_object].resetCorner();
@@ -108,6 +111,7 @@ void rotate(int axis, int direction) {
 
 void resize(float factor){
     if (picked_object == -1) return;
+    if (models[picked_object].type == Sphere) return;
     models[picked_object].size *= factor;
     models[picked_object].resetCorner();
 }
@@ -280,6 +284,9 @@ void rayPick()
 
 void mouse(int btn, int state, int x, int y)
 {
+    mouse_pos[0] = x;
+    mouse_pos[1] = y;
+
     // Clear previous select data
     if (picked_object != -1) {
         models[picked_object].distToMouseRay = -1;
@@ -399,23 +406,8 @@ void init(void)
 
 Image marbleTexture;
 
-void draw(Object& object)
-{
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambMat[object.material]);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffMat[object.material]);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specMat[object.material]);
-    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 27);
-    
-    marbleTexture.texture();
-    
-    glPushMatrix();
-    glRotatef(object.orientation[0], 1, object.position[1], object.position[2]);
-    glRotatef(object.orientation[1], object.position[0], 1, object.position[2]);
-    glRotatef(object.orientation[2], object.position[0], object.position[1], 1);
-    glTranslatef(object.position[0], object.position[1], object.position[2]);
-    glScalef(object.size, object.size, object.size);
-    glFrontFace(GL_CW);
-    switch (object.type)
+void drawShape(int shape){
+    switch (shape)
     {
     case Cube:
         glutSolidCube(1);
@@ -438,6 +430,37 @@ void draw(Object& object)
     default:
         break;
     }
+}
+
+void draw(Object& object)
+{    
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambMat[object.material]);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffMat[object.material]);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specMat[object.material]);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 27);
+    
+    marbleTexture.texture();
+    
+    glPushMatrix();
+    glRotatef(object.orientation[0], 1, object.position[1], object.position[2]);
+    glRotatef(object.orientation[1], object.position[0], 1, object.position[2]);
+    glRotatef(object.orientation[2], object.position[0], object.position[1], 1);
+    glTranslatef(object.position[0], object.position[1], object.position[2]);
+    glScalef(object.size, object.size, object.size);
+    
+    
+    drawShape(object.type);
+
+    if (picked_object != -1 && addressof(object) == addressof(models[picked_object])){
+        glCullFace(GL_FRONT);
+        glPushMatrix();
+        glScalef(1.05,1.05,1.05);
+        drawShape(object.type);
+        glPopMatrix();
+        glCullFace(GL_BACK);
+    }
+    
+
     glPopMatrix();
 }
 
@@ -548,6 +571,13 @@ void special(int key, int xIn, int yIn)
     }
 }
 
+void motion(int mX, int mY){
+    camPos[0] += mX-mouse_pos[0];
+    camPos[2] += mY-mouse_pos[1];
+    mouse_pos[0] = mX;
+    mouse_pos[1] = mY;
+}
+
 /* main function - program entry point */
 int main(int argc, char** argv)
 {
@@ -560,25 +590,19 @@ int main(int argc, char** argv)
 
     glutCreateWindow("3GC3 Code for Ray Picking"); //creates the window
 
-    //display callback
     glutDisplayFunc(display);
-
-    //keyboard callback
     glutKeyboardFunc(keyboard);
     glutSpecialFunc(special);
 
-    //mouse callbacks
     glutMouseFunc(mouse);
-
-    //resize callback
+    glutMotionFunc(motion);
     glutReshapeFunc(reshape);
 
-    //fps timer callback
     glutTimerFunc(17, FPSTimer, 0);
 
     glEnable(GL_DEPTH_TEST);
-    glFrontFace(GL_CW);
-    glCullFace(GL_FRONT);
+    glFrontFace(GL_CCW);
+    glCullFace(GL_BACK);
     glEnable(GL_CULL_FACE);
     glShadeModel(GL_SMOOTH);
     glEnable(GL_TEXTURE_2D);
