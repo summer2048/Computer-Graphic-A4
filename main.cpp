@@ -363,7 +363,7 @@ void draw(Object& object)
     glRotatef(object.orientation[1], object.position[0], 1, object.position[2]);
     glRotatef(object.orientation[2], object.position[0], object.position[1], 1);
     glTranslatef(object.position[0], object.position[1], object.position[2]);
-    glScalef(object.size, object.size, object.size);
+    glScalef(object.scale[0], object.scale[1], object.scale[2]);
     glFrontFace(GL_CW);
     switch (object.type)
     {
