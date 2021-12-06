@@ -17,6 +17,7 @@
 #include <iostream>
 #include "object.h"
 #include "PPM.h"
+#include "drawing.h"
 
 #define Cube 0
 #define Tetrahedron 1
@@ -396,13 +397,17 @@ void init(void)
     models.push_back(light1);
 }
 
+Image marbleTexture;
+
 void draw(Object& object)
 {
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambMat[object.material]);
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffMat[object.material]);
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specMat[object.material]);
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 27);
-
+    
+    marbleTexture.texture();
+    
     glPushMatrix();
     glRotatef(object.orientation[0], 1, object.position[1], object.position[2]);
     glRotatef(object.orientation[1], object.position[0], 1, object.position[2]);
@@ -447,7 +452,7 @@ void drawFloor(){
     glutSolidCube(1);
     glPopMatrix();
 }
-Image marbleTexture;
+
 
 /* display function - GLUT display callback function
  *		clears the screen, sets the camera position
@@ -477,8 +482,6 @@ void display()
     glLightfv(GL_LIGHT2, GL_AMBIENT, amb[1]);
     glLightfv(GL_LIGHT2, GL_DIFFUSE, diff[1]);
     glLightfv(GL_LIGHT2, GL_SPECULAR, spec[1]);
-
-    marbleTexture.texture();
 
     glPushMatrix();
     glRotatef(scene_rot[1], 0, 1, 0);
@@ -579,7 +582,7 @@ int main(int argc, char** argv)
     glEnable(GL_CULL_FACE);
     glShadeModel(GL_SMOOTH);
     glEnable(GL_TEXTURE_2D);
-    
+
     init();
 
     glutMainLoop(); //starts the event glutMainLoop
