@@ -33,18 +33,20 @@ float camTarget[] = { 0, 0, 0 };
 float origin[] = { 0,0,0 };
 
 /* LIGHTING */
-float light_pos[4] = { 0,5,0,1 };
-float amb[4] = { 0,1,1,1 };
-float diff[4] = { 1,0,1,1 };
-float spec[4] = { 1,0,1,1 };
-float amb1[4] = { 1,1,1,1 };
-float diff1[4] = { 1,1,1,1 };
-float spec1[4] = { 1,1,1,1 };
+float light_pos[2][4] = {{ 0,5,0,1 }, { -5,5,0,1 }};
+float amb[2][4] = {{ 0,1,1,1 }, { 0.7,0.7,0.7,1 }};
+float diff[2][4] = {{ 1,0,1,1 }, { 0.7,0.7,0.7,1 }};
+float spec[2][4] = {{ 1,0,1,1 }, { 0.7,0.7,0.7,1 }};
+
+Object lights[2] = {Object(light_pos[0][0],light_pos[0][1],light_pos[0][2]), Object(light_pos[1][0],light_pos[1][1],light_pos[1][2])};
+int picked_light = -1;
+
 /* Materials */
 
-float ambMat[6][4] = {{0.5, 0.5, 0.5, 1}, {0.1, 0.18725, 0.1745, 1}, {0.24725, 0.1995, 0.0745, 1}, {0.2, 0.2, 0.6, 1}, {0.25, 0.20725, 0.20725, 1}};
-float diffMat[6][4] = {{0.5, 0, 0, 1}, {0.396, 0.74151, 0.69102, 1}, {0.75164, 0.60648, 0.22648, 1}, {1, 0, 1, 1}, {1, 0.829, 0.829, 1}};
-float specMat[6][4] = {{0, 0.5, 0, 1}, {0.297254, 0.30829, 0.306678, 1}, {0.628281, 0.555802, 0.366065, 1}, {1, 1, 1, 1}, {0.296648, 0.296648, 0.296648, 1}};
+float ambMat[6][4] = {{0.5, 0.5, 0.5, 1}, {0.1, 0.18725, 0.1745, 1}, {0.24725, 0.1995, 0.0745, 1}, {0.2, 0.2, 0.6, 1}, {0.25, 0.20725, 0.20725, 1}, {0.05375, 0.05, 0.06625, 1}};
+float diffMat[6][4] = {{0.5, 0, 0, 1}, {0.396, 0.74151, 0.69102, 1}, {0.75164, 0.60648, 0.22648, 1}, {1, 0, 1, 1}, {1, 0.829, 0.829, 1}, {0.18275, 0.17, 0.22525, 1}};
+float specMat[6][4] = {{0, 0.5, 0, 1}, {0.297254, 0.30829, 0.306678, 1}, {0.628281, 0.555802, 0.366065, 1}, {1, 1, 1, 1}, {0.296648, 0.296648, 0.296648, 1}, {0.332741, 0.328634, 0.346435, 1}};
+int mat;
 
 double* m_start = new double[3];
 double* m_end = new double[3];
@@ -101,7 +103,7 @@ void changeObject(int axis, int direction){
 
 void changeMat(int key){
     if (picked_object == -1) return;
-    models[picked_object].material = key - 49;
+    models[picked_object].material = mat;
 }
 
 //OpenGL functions
@@ -125,7 +127,10 @@ void keyboard(unsigned char key, int xIn, int yIn)
     case 51:
     case 52:
     case 53:
-        changeMat(key);
+        mat = key - 48;
+        break;
+    case 'm':
+        changeMat(mat);
         break; 
     case 'j':
         changeObject(0, -1);
@@ -248,6 +253,9 @@ void mouse(int btn, int state, int x, int y)
     if (picked_object != -1) {
         models[picked_object].distToMouseRay = -1;
     }
+    if (picked_light != -1){
+        lights[picked_light].distToMouseRay = -1;
+    }
 
     // New Raypick
     if (state == GLUT_DOWN)
@@ -309,6 +317,13 @@ void init(void)
     m_end[0] = 0;
     m_end[1] = 0;
     m_end[2] = 0;
+
+    // lights[0].type = Sphere;
+    // lights[0].size = 0.5;
+    // lights[1].type = Sphere;
+    // lights[1].size = 0.5;
+    // models.push_back(lights[0]);
+    // models.push_back(lights[1]);
 }
 
 void draw(Object& object)
@@ -319,9 +334,9 @@ void draw(Object& object)
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 27);
 
     glPushMatrix();
-    glRotatef(object.orientation[0], 1, 0, 0);
-    glRotatef(object.orientation[1], 0, 1, 0);
-    glRotatef(object.orientation[2], 0, 0, 1);
+    glRotatef(object.orientation[0], 1, object.position[1], object.position[2]);
+    glRotatef(object.orientation[1], object.position[0], 1, object.position[2]);
+    glRotatef(object.orientation[2], object.position[0], object.position[1], 1);
     glTranslatef(object.position[0], object.position[1], object.position[2]);
     glScalef(object.size, object.size, object.size);
     glFrontFace(GL_CW);
@@ -348,7 +363,33 @@ void draw(Object& object)
     glPopMatrix();
 }
 
+void drawLight(){
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambMat[0]);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffMat[0]);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specMat[0]);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 27);
 
+    glPushMatrix();
+    glTranslatef(lights[0].position[0],lights[0].position[1],lights[0].position[2]);
+    glutSolidSphere(0.5, 16, 16);
+    glPopMatrix();
+    glPushMatrix();
+    glTranslatef(lights[1].position[0],lights[1].position[1],lights[1].position[2]);
+    glutSolidSphere(0.5, 16, 16);
+    glPopMatrix();
+}
+
+void drawFloor(){
+    glPushMatrix();
+    glTranslatef(0,-2,0);
+    glScalef(10,0.2,10);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambMat[0]);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffMat[0]);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specMat[0]);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 27);
+    glutSolidCube(1);
+    glPopMatrix();
+}
 
 /* display function - GLUT display callback function
  *		clears the screen, sets the camera position
@@ -369,20 +410,23 @@ void display()
     glEnd();
 
     glColor3f(0, 1, 1);
-    glLightfv(GL_LIGHT0, GL_POSITION, light_pos);
-    glLightfv(GL_LIGHT0, GL_AMBIENT, amb);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, diff);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, spec);
+    glLightfv(GL_LIGHT0, GL_POSITION, light_pos[0]);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, amb[0]);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, diff[0]);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, spec[0]);
+
+    glLightfv(GL_LIGHT0, GL_POSITION, light_pos[1]);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, amb[1]);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, diff[1]);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, spec[1]);
 
     for (int i = 0; i < models.size(); i++) {
         draw(models[i]);
     }
 
-    glPushMatrix();
-    glTranslatef(0,-2,0);
-    glScalef(10,0.2,10);
-    glutSolidCube(1);
-    glPopMatrix();
+    drawLight();
+
+    drawFloor();
 
     glutSwapBuffers();
 }
@@ -412,25 +456,27 @@ void special(int key, int xIn, int yIn)
     if (glutGetModifiers() == GLUT_ACTIVE_ALT){
         resize(0.9);
     } else {
-        camPos[1] -= 0.2f;
-        camTarget[1] -= 0.2f;
+        camPos[0] -= 1;
     }
         break;
     case GLUT_KEY_UP:
     if (glutGetModifiers() == GLUT_ACTIVE_ALT){
         resize(1.1);
     } else {
-        camPos[1] += 0.2f;
-        camTarget[1] += 0.2f;
+        camPos[0] += 1;
     }
         break;
     case GLUT_KEY_LEFT:
-        camPos[0] -= 0.2f;
-        camTarget[0] -= 0.2f;
+        camPos[2] -= 1;
         break;
     case GLUT_KEY_RIGHT:
-        camPos[0] += 0.2f;
-        camTarget[0] += 0.2f;
+        camPos[2] += 1;
+        break;
+    case GLUT_KEY_F1:
+        camPos[1] -= 1;
+        break;
+    case GLUT_KEY_F2:
+        camPos[1] += 1;
         break;
     }
 }
