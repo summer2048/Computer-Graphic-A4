@@ -16,6 +16,7 @@
 #include <vector>
 #include <iostream>
 #include "object.h"
+#include "PPM.h"
 
 #define Cube 0
 #define Sphere 1
@@ -288,6 +289,30 @@ void mouse(int btn, int state, int x, int y)
     }
 }
 
+struct Image {
+    int mWidth;
+    int mHeight;
+    GLubyte * mImage;
+
+    void load(char * filename) {
+        mImage = LoadPPM(filename, &mWidth, &mHeight);
+    }
+
+    void draw(unsigned int x, unsigned int y) {
+        glRasterPos2i(x + mWidth, y);
+        glPixelZoom(-1, 1);
+        glDrawPixels(mWidth, mHeight, GL_RGB, GL_UNSIGNED_BYTE, mImage);
+    }
+
+    void texture() {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mWidth, mHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, mImage);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,GL_REPEAT);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    }
+};
+
 //initialization
 void init(void)
 {
@@ -348,7 +373,7 @@ void draw(Object& object)
     glPopMatrix();
 }
 
-
+Image marbleTexture;
 
 /* display function - GLUT display callback function
  *		clears the screen, sets the camera position
@@ -373,7 +398,9 @@ void display()
     glLightfv(GL_LIGHT0, GL_AMBIENT, amb);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, diff);
     glLightfv(GL_LIGHT0, GL_SPECULAR, spec);
-
+    
+    marbleTexture.texture();
+    
     for (int i = 0; i < models.size(); i++) {
         draw(models[i]);
     }
@@ -438,6 +465,7 @@ void special(int key, int xIn, int yIn)
 /* main function - program entry point */
 int main(int argc, char** argv)
 {
+    marbleTexture.load("marble.ppm");
     glutInit(&argc, argv); //starts up GLUT
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
 
@@ -466,7 +494,9 @@ int main(int argc, char** argv)
     glFrontFace(GL_CW);
     glCullFace(GL_FRONT);
     glEnable(GL_CULL_FACE);
-
+    glShadeModel(GL_SMOOTH);
+    glEnable(GL_TEXTURE_2D);
+    
     init();
 
     glutMainLoop(); //starts the event glutMainLoop
