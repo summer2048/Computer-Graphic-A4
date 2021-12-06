@@ -398,6 +398,8 @@ void init(void)
 }
 
 Image marbleTexture;
+Image secondTexture;
+Image thirdTexture;
 
 void draw(Object& object)
 {
@@ -405,8 +407,6 @@ void draw(Object& object)
     glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffMat[object.material]);
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specMat[object.material]);
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 27);
-    
-    marbleTexture.texture();
     
     glPushMatrix();
     glRotatef(object.orientation[0], 1, object.position[1], object.position[2]);
@@ -418,9 +418,11 @@ void draw(Object& object)
     switch (object.type)
     {
     case Cube:
+        secondTexture.texture();
         glutSolidCube(1);
         break;
     case Tetrahedron:
+        thirdTexture.texture();
         glutSolidTetrahedron1();
         break;
     case Cone:
@@ -430,6 +432,7 @@ void draw(Object& object)
         glutSolidCylinder(1, 1, 16, 16);
         break;
     case Teapot:
+        marbleTexture.texture();
         glutSolidTeapot(1);
         break;
     case Sphere:
@@ -552,6 +555,9 @@ void special(int key, int xIn, int yIn)
 int main(int argc, char** argv)
 {
     marbleTexture.load("marble.ppm");
+    secondTexture.load("second.ppm");
+    thirdTexture.load("third.ppm");
+
     glutInit(&argc, argv); //starts up GLUT
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
 
