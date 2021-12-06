@@ -19,10 +19,11 @@
 #include "PPM.h"
 
 #define Cube 0
-#define Sphere 1
+#define Tetrahedron 1
 #define Cone 2
 #define Cylinder 3
 #define Teapot 4
+#define Sphere 5
 
 using namespace std;
 
@@ -33,14 +34,16 @@ float camPos[] = { 10, 10, 10 }; //where the camera is
 float camTarget[] = { 0, 0, 0 };
 float origin[] = { 0,0,0 };
 
+int scene_rot[3] = { 0, 0, 0 };
+
+int light0_idx = 0;
+int light1_idx = 1;
+
 /* LIGHTING */
-float light_pos[2][4] = {{ 0,5,0,1 }, { -5,5,0,1 }};
+// float light_pos[2][4] = {{ 0,5,0,1 }, { -5,5,0,1 }};
 float amb[2][4] = {{ 0,1,1,1 }, { 0.7,0.7,0.7,1 }};
 float diff[2][4] = {{ 1,0,1,1 }, { 0.7,0.7,0.7,1 }};
 float spec[2][4] = {{ 1,0,1,1 }, { 0.7,0.7,0.7,1 }};
-
-Object lights[2] = {Object(light_pos[0][0],light_pos[0][1],light_pos[0][2]), Object(light_pos[1][0],light_pos[1][1],light_pos[1][2])};
-int picked_light = -1;
 
 /* Materials */
 
@@ -65,14 +68,22 @@ void addModel()
 
 void deleteModel(int i)
 {
+    if (i < 2) return;
     models[i] = models[models.size() - 1];
     models.pop_back();
 }
 
 void clear() {
-    while (models.size() > 0) {
-        deleteModel(0);
+    picked_object = -1;
+    while (models.size() > 2) {
+        deleteModel(2);
     }
+    scene_rot[0] = 0;
+    scene_rot[1] = 0;
+    scene_rot[2] = 0;
+    camPos[0] = 10;
+    camPos[1] = 10;
+    camPos[2] = 10;
 }
 
 void move(int axis, int direction) {
@@ -129,6 +140,18 @@ void keyboard(unsigned char key, int xIn, int yIn)
     case 52:
     case 53:
         mat = key - 48;
+        break;
+    case 54:
+        scene_rot[1] = (scene_rot[1] + 15) % 360;
+        break;
+    case 55:
+        scene_rot[1] = (scene_rot[1] + 345) % 360;
+        break;
+    case 56:
+        scene_rot[2] = (scene_rot[2] + 15) % 360;
+        break;
+    case 57:
+        scene_rot[2] = (scene_rot[2] + 345) % 360;
         break;
     case 'm':
         changeMat(mat);
@@ -254,9 +277,6 @@ void mouse(int btn, int state, int x, int y)
     if (picked_object != -1) {
         models[picked_object].distToMouseRay = -1;
     }
-    if (picked_light != -1){
-        lights[picked_light].distToMouseRay = -1;
-    }
 
     // New Raypick
     if (state == GLUT_DOWN)
@@ -321,11 +341,26 @@ struct Image {
     }
 };
 
+void printHelp(){
+    cout << "Spheres are represent two lights." << endl;
+    cout << "Press 'a' to add new object at origin." << endl;
+    cout << "Press 'r' to clear objects and reset scene" << endl;
+    cout << "Left click to pick an object, click to nothing or floor to unpick" << endl;
+    cout << "right click to delete an object, light sphere cannot be delete" << endl;
+    cout << "Press 'u','i','o','j','k','l' to move picked object around, hold alt and press them will rotate object." << endl;
+    cout << "Press alt + up/down to scale picked objects." << endl;
+    cout << "Press 1-5 to choose color, then press 'm' to color picked object" << endl;
+    cout << "Press 6-9 to rotate scene" << endl;
+    cout << "Press Up/Down/Left/Right/F1/F2 to control camera." << endl;
+}
+
 //initialization
 void init(void)
 {
+    printHelp();
     glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
+    glEnable(GL_LIGHT1);
+    glEnable(GL_LIGHT2);
     glClearColor(1, 1, 1, 0);
     glColor3f(1, 1, 1);
     glEnable(GL_DOUBLEBUFFER);
@@ -343,12 +378,16 @@ void init(void)
     m_end[1] = 0;
     m_end[2] = 0;
 
-    // lights[0].type = Sphere;
-    // lights[0].size = 0.5;
-    // lights[1].type = Sphere;
-    // lights[1].size = 0.5;
-    // models.push_back(lights[0]);
-    // models.push_back(lights[1]);
+    Object light0(5,5,0);
+    light0.type = Sphere;
+    light0.material = 0;
+    light0.size = 0.5;
+    models.push_back(light0);
+    Object light1(-5,5,0);
+    light1.type = Sphere;
+    light1.material = 0;
+    light1.size = 0.5;
+    models.push_back(light1);
 }
 
 void draw(Object& object)
@@ -363,15 +402,15 @@ void draw(Object& object)
     glRotatef(object.orientation[1], object.position[0], 1, object.position[2]);
     glRotatef(object.orientation[2], object.position[0], object.position[1], 1);
     glTranslatef(object.position[0], object.position[1], object.position[2]);
-    glScalef(object.scale[0], object.scale[1], object.scale[2]);
+    glScalef(object.size, object.size, object.size);
     glFrontFace(GL_CW);
     switch (object.type)
     {
     case Cube:
         glutSolidCube(1);
         break;
-    case Sphere:
-        glutSolidSphere(1, 16, 16);
+    case Tetrahedron:
+        glutSolidTetrahedron();
         break;
     case Cone:
         glutSolidCone(1, 1, 16, 16);
@@ -382,25 +421,12 @@ void draw(Object& object)
     case Teapot:
         glutSolidTeapot(1);
         break;
+    case Sphere:
+        glutSolidSphere(1,16,16);
+        break;
     default:
         break;
     }
-    glPopMatrix();
-}
-
-void drawLight(){
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambMat[0]);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffMat[0]);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specMat[0]);
-    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 27);
-
-    glPushMatrix();
-    glTranslatef(lights[0].position[0],lights[0].position[1],lights[0].position[2]);
-    glutSolidSphere(0.5, 16, 16);
-    glPopMatrix();
-    glPushMatrix();
-    glTranslatef(lights[1].position[0],lights[1].position[1],lights[1].position[2]);
-    glutSolidSphere(0.5, 16, 16);
     glPopMatrix();
 }
 
@@ -436,25 +462,29 @@ void display()
     glEnd();
 
     glColor3f(0, 1, 1);
-    glLightfv(GL_LIGHT0, GL_POSITION, light_pos[0]);
-    glLightfv(GL_LIGHT0, GL_AMBIENT, amb[0]);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, diff[0]);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, spec[0]);
+    glLightfv(GL_LIGHT1, GL_POSITION, models[0].position);
+    glLightfv(GL_LIGHT1, GL_AMBIENT, amb[0]);
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, diff[0]);
+    glLightfv(GL_LIGHT1, GL_SPECULAR, spec[0]);
 
-    glLightfv(GL_LIGHT0, GL_POSITION, light_pos[1]);
-    glLightfv(GL_LIGHT0, GL_AMBIENT, amb[1]);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, diff[1]);
-    glLightfv(GL_LIGHT0, GL_SPECULAR, spec[1]);
+    glLightfv(GL_LIGHT2, GL_POSITION, models[1].position);
+    glLightfv(GL_LIGHT2, GL_AMBIENT, amb[1]);
+    glLightfv(GL_LIGHT2, GL_DIFFUSE, diff[1]);
+    glLightfv(GL_LIGHT2, GL_SPECULAR, spec[1]);
 
     marbleTexture.texture();
+
+    glPushMatrix();
+    glRotatef(scene_rot[1], 0, 1, 0);
+    glRotatef(scene_rot[2], 0, 0, 1);
 
     for (int i = 0; i < models.size(); i++) {
         draw(models[i]);
     }
 
-    drawLight();
-
     drawFloor();
+
+    glPopMatrix();
 
     glutSwapBuffers();
 }

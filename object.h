@@ -3,10 +3,11 @@
 
 
 #define Cube 0
-#define Sphere 1
+#define Tetrahedron 1
 #define Cone 2
 #define Cylinder 3
 #define Teapot 4
+#define Sphere 5
 
 class Object
 {
