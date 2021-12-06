@@ -445,6 +445,7 @@ void draw(Object& object)
 }
 
 void drawFloor(){
+    glDisable(GL_TEXTURE_2D);
     glPushMatrix();
     glTranslatef(0,-2,0);
     glScalef(10,0.2,10);
@@ -454,6 +455,7 @@ void drawFloor(){
     glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 27);
     glutSolidCube(1);
     glPopMatrix();
+    glEnable(GL_TEXTURE_2D);
 }
 
 
