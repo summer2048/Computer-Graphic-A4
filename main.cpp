@@ -421,7 +421,7 @@ void draw(Object& object)
         glutSolidCube(1);
         break;
     case Tetrahedron:
-        glutSolidTetrahedron();
+        glutSolidTetrahedron1();
         break;
     case Cone:
         glutSolidCone(1, 1, 16, 16);
