@@ -12,7 +12,7 @@
 #include <GL/glu.h>
 #include <GL/freeglut.h>
 #endif
-
+#include <fstream>
 #include <vector>
 #include <iostream>
 #include "object.h"
@@ -554,6 +554,9 @@ void FPSTimer(int value)
 
 void saveWork(char *filename)
 {
+                ofstream out;
+                out.open(filename, ofstream::out | ofstream::trunc);
+                out.close();
 	FILE *file = fopen(filename, "w");
 	fprintf(file, "%f %f %f %f %f %f %d %d %d %d %d\n",
 		camPos[0], camPos[1], camPos[2],
