@@ -371,6 +371,7 @@ void printHelp(){
     cout << "Press 1-5 to choose color, then press 'm' to color picked object" << endl;
     cout << "Press 6-9 to rotate scene, 0 to reset. This is just for viewsing so mouse ray may not work after rotate." << endl;
     cout << "Press Up/Down/Left/Right/F1/F2 to control camera." << endl;
+    cout << "Press F3 to save, press F4 to load." << endl;
 }
 
 //initialization
