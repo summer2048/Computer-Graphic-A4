@@ -571,6 +571,7 @@ void saveWork(char *filename)
 
 void loadWork(char *filename)
 {
+	while (models.size() > 0) models.pop_back();
 	FILE *file = fopen(filename, "r");
 
 	fscanf(file, "%f %f %f %f %f %f %d %d %d %d %d\n",
@@ -630,7 +631,7 @@ void special(int key, int xIn, int yIn)
         saveWork("load.txt");
         break;
     case GLUT_KEY_F4:
-        loadWork("save.txt");
+        loadWork("load.txt");
         break;
     }
 }
