@@ -14,6 +14,7 @@
 - Press 1-5 to choose color, then press 'm' to color picked object.
 - Press 6-9 to rotate scene.
 - Press Up/Down/Left/Right/F1/F2 to control camera.
+- Press F3 to save work, F4 to load work.
 
 ## Reference
 - OpenGL source code of glutSolidCube(int size).
