@@ -627,10 +627,10 @@ void special(int key, int xIn, int yIn)
         camPos[1] += 1;
         break;
     case GLUT_KEY_F3:
-        saveWork("save.txt");
+        saveWork("load.txt");
         break;
     case GLUT_KEY_F4:
-        loadWork("load.txt");
+        loadWork("save.txt");
         break;
     }
 }
