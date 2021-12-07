@@ -43,7 +43,7 @@ int light1_idx = 1;
 int mouse_pos[2] = {0,0};
 
 /* LIGHTING */
-// float light_pos[2][4] = {{ 0,5,0,1 }, { -5,5,0,1 }};
+//float light_pos[2][4] = {{ 0,5,0,1 }, { -5,5,0,1 }};
 float amb[2][4] = {{ 0,1,1,1 }, { 0.7,0.7,0.7,1 }};
 float diff[2][4] = {{ 1,0,1,1 }, { 0.7,0.7,0.7,1 }};
 float spec[2][4] = {{ 1,0,1,1 }, { 0.7,0.7,0.7,1 }};
@@ -546,6 +546,56 @@ void FPSTimer(int value)
     glutTimerFunc(17, FPSTimer, 0);
 }
 
+void saveWork(char *filename)
+{
+	FILE *file = fopen(filename, "w");
+	fprintf(file, "%f %f %f %f %f %f %d %d %d %d %d\n",
+		camPos[0], camPos[1], camPos[2],
+		camTarget[0], camTarget[1], camTarget[2],
+		scene_rot[0], scene_rot[1], scene_rot[2],
+		picked_object, mat);
+
+	for (int i = 0; i < models.size(); i++)
+	{
+		Object m = models.at(i);
+		fprintf(file, "%f %f %f %f %f %f %f %f %f %d %d\n",
+			m.position[0], m.position[1], m.position[2],
+			m.orientation[0], m.orientation[1], m.orientation[2],
+			m.scale[0], m.scale[1], m.scale[2],
+			m.material, m.type);
+	}
+
+	fclose(file);
+	printf("Saved to '%s'\n", filename);
+}
+
+void loadWork(char *filename)
+{
+	FILE *file = fopen(filename, "r");
+
+	fscanf(file, "%f %f %f %f %f %f %d %d %d %d %d\n",
+		&camPos[0], &camPos[1], &camPos[2],
+		&camTarget[0], &camTarget[1], &camTarget[2],
+		&scene_rot[0], &scene_rot[1], &scene_rot[2],
+		&picked_object, &mat);
+
+	while (!feof(file))
+	{
+		Object m = Object(0, 0, 0);
+		fscanf(file, "%f %f %f %f %f %f %f %f %f %d %d\n",
+			&m.position[0], &m.position[1], &m.position[2],
+			&m.orientation[0], &m.orientation[1], &m.orientation[2],
+			&m.scale[0], &m.scale[1], &m.scale[2],
+			&m.material, &m.type);
+		models.push_back(m);
+	}
+
+	fclose(file);
+
+	printf("Loaded from file '%s'\n", filename);
+}
+
+
 void special(int key, int xIn, int yIn)
 {
     switch (key)
@@ -575,6 +625,12 @@ void special(int key, int xIn, int yIn)
         break;
     case GLUT_KEY_F2:
         camPos[1] += 1;
+        break;
+    case GLUT_KEY_F3:
+        saveWork("save.txt");
+        break;
+    case GLUT_KEY_F4:
+        loadWork("load.txt");
         break;
     }
 }
