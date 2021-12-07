@@ -145,6 +145,11 @@ void keyboard(unsigned char key, int xIn, int yIn)
     case 'r':
         clear();
         break;
+    case 48:
+        scene_rot[0] = 0;
+        scene_rot[1] = 0;
+        scene_rot[2] = 0;
+        break;
     case 49:
     case 50:
     case 51:
@@ -364,7 +369,7 @@ void printHelp(){
     cout << "Press 'u','i','o','j','k','l' to move picked object around, hold alt and press them will rotate object." << endl;
     cout << "Press alt + up/down to scale picked objects." << endl;
     cout << "Press 1-5 to choose color, then press 'm' to color picked object" << endl;
-    cout << "Press 6-9 to rotate scene" << endl;
+    cout << "Press 6-9 to rotate scene, 0 to reset. This is just for viewsing so mouse ray may not work after rotate." << endl;
     cout << "Press Up/Down/Left/Right/F1/F2 to control camera." << endl;
 }
 
