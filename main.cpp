@@ -567,10 +567,10 @@ void saveWork(char *filename)
 	for (int i = 0; i < models.size(); i++)
 	{
 		Object m = models.at(i);
-		fprintf(file, "%f %f %f %f %f %f %f %f %f %d %d\n",
+		fprintf(file, "%f %f %f %f %f %f %f %f %f %f %d %d\n",
 			m.position[0], m.position[1], m.position[2],
 			m.orientation[0], m.orientation[1], m.orientation[2],
-			m.scale[0], m.scale[1], m.scale[2],
+			m.scale[0], m.scale[1], m.scale[2], m.size,
 			m.material, m.type);
 	}
 
@@ -592,10 +592,10 @@ void loadWork(char *filename)
 	while (!feof(file))
 	{
 		Object m = Object(0, 0, 0);
-		fscanf(file, "%f %f %f %f %f %f %f %f %f %d %d\n",
+		fscanf(file, "%f %f %f %f %f %f %f %f %f %f %d %d\n",
 			&m.position[0], &m.position[1], &m.position[2],
 			&m.orientation[0], &m.orientation[1], &m.orientation[2],
-			&m.scale[0], &m.scale[1], &m.scale[2],
+			&m.scale[0], &m.scale[1], &m.scale[2], &m.size,
 			&m.material, &m.type);
 		models.push_back(m);
 	}
