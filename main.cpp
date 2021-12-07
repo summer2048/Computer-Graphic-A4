@@ -37,19 +37,14 @@ float origin[] = { 0,0,0 };
 
 int scene_rot[3] = { 0, 0, 0 };
 
-int light0_idx = 0;
-int light1_idx = 1;
-
 int mouse_pos[2] = {0,0};
 
 /* LIGHTING */
-//float light_pos[2][4] = {{ 0,5,0,1 }, { -5,5,0,1 }};
 float amb[2][4] = {{ 0,1,1,1 }, { 0.7,0.7,0.7,1 }};
 float diff[2][4] = {{ 1,0,1,1 }, { 0.7,0.7,0.7,1 }};
 float spec[2][4] = {{ 1,0,1,1 }, { 0.7,0.7,0.7,1 }};
 
 /* Materials */
-
 float ambMat[6][4] = {{0.5, 0.5, 0.5, 1}, {0.1, 0.18725, 0.1745, 1}, {0.24725, 0.1995, 0.0745, 1}, {0.2, 0.2, 0.6, 1}, {0.25, 0.20725, 0.20725, 1}, {0.05375, 0.05, 0.06625, 1}};
 float diffMat[6][4] = {{0.5, 0, 0, 1}, {0.396, 0.74151, 0.69102, 1}, {0.75164, 0.60648, 0.22648, 1}, {1, 0, 1, 1}, {1, 0.829, 0.829, 1}, {0.18275, 0.17, 0.22525, 1}};
 float specMat[6][4] = {{0, 0.5, 0, 1}, {0.297254, 0.30829, 0.306678, 1}, {0.628281, 0.555802, 0.366065, 1}, {1, 1, 1, 1}, {0.296648, 0.296648, 0.296648, 1}, {0.332741, 0.328634, 0.346435, 1}};
@@ -62,6 +57,7 @@ double* Rd = new double[3];
 // The index of picked object, -1 if none is picked.
 int picked_object = -1;
 
+/* Add random object at origin */
 void addModel()
 {
     Object newModel(origin[0], origin[1], origin[2]);
@@ -69,6 +65,7 @@ void addModel()
     picked_object = models.size() - 1;
 }
 
+/* Delete object except light */
 void deleteModel(int i)
 {
     if (i < 2) return;
@@ -76,6 +73,7 @@ void deleteModel(int i)
     models.pop_back();
 }
 
+/* Delete all objects except light, reset scene and camera */
 void clear() {
     picked_object = -1;
     while (models.size() > 2) {
@@ -95,12 +93,14 @@ void clear() {
     models[1].position[2] = 0;
 }
 
+/* Move picked object */
 void move(int axis, int direction) {
     if (picked_object == -1) return;
     models[picked_object].position[axis] += direction;
     models[picked_object].resetCorner();
 }
 
+/* Rotate picked object except light */
 void rotate(int axis, int direction) {
     if (picked_object == -1) return;
     if (models[picked_object].type == Sphere) return;
@@ -109,6 +109,7 @@ void rotate(int axis, int direction) {
     models[picked_object].resetCorner();
 }
 
+/* Resize picked object except light */
 void resize(float factor){
     if (picked_object == -1) return;
     if (models[picked_object].type == Sphere) return;
@@ -116,6 +117,7 @@ void resize(float factor){
     models[picked_object].resetCorner();
 }
 
+/* Help function to call move/rotate */
 void changeObject(int axis, int direction){
     if (glutGetModifiers() == GLUT_ACTIVE_ALT) {
         rotate(axis, direction);
@@ -124,13 +126,12 @@ void changeObject(int axis, int direction){
     }
 }
 
+/* Change material of picked object */
 void changeMat(int key){
     if (picked_object == -1) return;
     models[picked_object].material = mat;
 }
 
-//OpenGL functions
-//keyboard stuff
 void keyboard(unsigned char key, int xIn, int yIn)
 {   
     switch (key)
@@ -195,7 +196,7 @@ void keyboard(unsigned char key, int xIn, int yIn)
     }
 }
 
-
+/* Ray pick of sphere */
 void sphereRayPick(Object& object)
 {
     double A = 1; // Rd is unit vector, so Rd * Rd = 1.
@@ -220,6 +221,7 @@ void sphereRayPick(Object& object)
 
 // plane = the plane which is constant e.g. x = 1, then plane = x.
 // 0,1,2 represent x,y,z
+/* Check if mouse ray intesect down left 3 planes */
 void intersectDownLeft(Object& object, int plane) {
     float planeConst, d;
     planeConst = object.DownLeft[plane];
@@ -234,6 +236,7 @@ void intersectDownLeft(Object& object, int plane) {
     }
 }
 
+/* Check if mouse ray intesect upper right 3 planes */
 void intersectUpperRight(Object& object, int plane) {
     float planeConst, d;
     planeConst = object.UpperRight[plane];
@@ -248,7 +251,7 @@ void intersectUpperRight(Object& object, int plane) {
     }
 }
 
-
+/* Help function to check if an object have intersection to mouse ray */
 void boxRayPick(Object& object)
 {
     intersectDownLeft(object, 0);
@@ -259,6 +262,7 @@ void boxRayPick(Object& object)
     intersectUpperRight(object, 2);
 }
 
+/* Pick the closest object which has intersection to mouse ray */
 void rayPick()
 {
     // Set disToMouseRay for exist objects
@@ -369,8 +373,9 @@ void printHelp(){
     cout << "Press 'u','i','o','j','k','l' to move picked object around, hold alt and press them will rotate object." << endl;
     cout << "Press alt + up/down to scale picked objects." << endl;
     cout << "Press 1-5 to choose color, then press 'm' to color picked object" << endl;
-    cout << "Press 6-9 to rotate scene, 0 to reset. This is just for viewsing so mouse ray may not work after rotate." << endl;
+    cout << "Press 6-9 to rotate scene, 0 to reset. This is just for viewsing so mouse ray may not work after rotate. Press 0 to reset scene." << endl;
     cout << "Press Up/Down/Left/Right/F1/F2 to control camera." << endl;
+    cout << "Click & drag by mouse to control camera." << endl;
     cout << "Press F3 to save, press F4 to load." << endl;
 }
 
@@ -453,9 +458,9 @@ void draw(Object& object)
     marbleTexture.texture();
     
     glPushMatrix();
-    glRotatef(object.orientation[0], 1, object.position[1], object.position[2]);
-    glRotatef(object.orientation[1], object.position[0], 1, object.position[2]);
-    glRotatef(object.orientation[2], object.position[0], object.position[1], 1);
+    glRotatef(object.orientation[0], 100, object.position[1], object.position[2]);
+    glRotatef(object.orientation[1], object.position[0], 100, object.position[2]);
+    glRotatef(object.orientation[2], object.position[0], object.position[1], 100);
     glTranslatef(object.position[0], object.position[1], object.position[2]);
     glScalef(object.size, object.size, object.size);
     glFrontFace(GL_CW);
